@@ -1,0 +1,7 @@
+VIEWS_URL_SUFFIX = "members/viewed_me/"
+TWINS_URL_SUFFIX = "members/my_twins/"
+SEARCH_URL_SUFFIX = "members/search_friends/"
+FEED_ITEMS_SELECTOR = "#main_dataview"
+ADVANCED_SEARCH_SELECTOR = "#advanced_tab > div.tab_middle"
+ITEM_TITLE_SELECTOR = "div > a"
+NUM_OF_VIEWS_SELECTOR = "#mini_profile_blink_wrapper_viewed_me > div"
