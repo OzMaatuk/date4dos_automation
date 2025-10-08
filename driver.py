@@ -6,19 +6,20 @@ from constants.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# TODO: channel also can be configurable.
 class PlaywrightDriver:
     """Basic Playwright driver operations with context manager support."""
     
     def __init__(self, headless: bool = Settings().HEADLESS, 
                  timeout: int = Settings().TIMEOUT, 
-                 user_data_dir: str = ""):
+                 user_data_dir: str = "",
+                 channel: Optional[str] = Settings().BROWSER_TYPE):
         self.headless = headless
         self.timeout = timeout
         self.user_data_dir = user_data_dir
         self._playwright: Optional[Playwright] = None
         self._browser_context: Optional[BrowserContext] = None
         self.page: Optional[Page] = None
+        self.channel = channel
         
     def __enter__(self):
         self.initialize()
@@ -47,7 +48,7 @@ class PlaywrightDriver:
                 headless=self.headless,
                 ignore_https_errors=True,
                 timeout=self.timeout,
-                channel="msedge",
+                channel=self.channel,
                 args=browser_args,
             )
             

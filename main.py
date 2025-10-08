@@ -16,7 +16,7 @@ def main():
     browser_type = Settings().BROWSER_TYPE
     timeout = Settings().TIMEOUT
 
-    with PlaywrightDriver(headless, timeout, browser_data) as browser:
+    with PlaywrightDriver(headless, timeout, browser_data, browser_type) as browser:
         if not browser.page:
             raise Exception("Failed to initialize browser page")
 
