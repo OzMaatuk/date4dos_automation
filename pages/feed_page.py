@@ -19,7 +19,7 @@ class FeedPage:
             try:
                 self.page.click(ADVANCED_SEARCH_SELECTOR)
             except Exception as e:
-                pass # TODO: improve handling diffrent feeds, prefered in conltroller.
+                logger.error(f"Could not open advanded search: {e}")
 
     def scroll_to_bottom(self) -> None:
         logger.debug("FeedPage.scroll_to_bottom")
@@ -62,17 +62,3 @@ class FeedPage:
         except Exception:
             logger.error("Could not parse number of views.")
         return res
-
-    def filter_min_age(self, age: int) -> None:
-        pass # TODO
-
-    def filter_max_age(self, age: int) -> None:
-        pass # TODO
-
-    def filter_min_high(self, high: int) -> None:
-        pass # TODO
-
-    def filter_max_high(self, high: int) -> None:
-        pass # TODO
-
-    # implement more filter functions for each filter option
