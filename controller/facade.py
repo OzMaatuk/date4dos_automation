@@ -30,8 +30,9 @@ class Facade:
     
     def apply_filters(self, filters: dict) -> None:
         logger.debug("Facade.apply_filters")
-        # TODO
         return
+        # TODO
+        # implement more filter functions for each filter option in feed_page
         feed_page = FeedPage(self.page)
         try:
             feed_page.filter_min_age(filters['min_age'])
