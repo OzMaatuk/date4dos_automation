@@ -1,18 +1,18 @@
 import logging
 import pytest
-from utils.msg_gen import MessageGenerator
 import tempfile
 import os
+
+from constants.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def test_generate_mocked(mock_llm_utils):
+def test_generate_mocked(mock_msg_gen):
     logger.debug("test_generate_mocked start")
-    msg_gen = MessageGenerator(api_key="test_key")
-    result = msg_gen.generate("Test item description")
+    result = mock_msg_gen.generate("Test item description")
     assert result == "Generated text"
-    mock_llm_utils.create_completion.assert_called_once()
+    mock_msg_gen.llm.invoke.assert_called_once()
 
 def test_generate_prompt(message_generator):
     logger.debug("test_generate_prompt start")
@@ -52,11 +52,9 @@ def test_generate(message_generator):
             message_generator.prompt_file_path = prompt_file.name
             message_generator.profile_file_path = profile_file.name
 
-            result = message_generator.generate("Shimi Tavori")
+            result = message_generator.generate("Return the message")
             # Assert the LLM's expected response
-            assert "John Doe" in result
-            assert "Shimi Tavori" in result
-            # assert "Sholomo Tavori" in result
+            assert Settings().DEFAULT_MESSAGE in result
         
         finally:
             os.unlink(prompt_file.name)

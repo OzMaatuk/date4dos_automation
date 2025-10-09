@@ -5,3 +5,4 @@ FEED_ITEMS_SELECTOR = "#main_dataview"
 ADVANCED_SEARCH_SELECTOR = "#advanced_tab > div.tab_middle"
 ITEM_TITLE_SELECTOR = "div > a"
 NUM_OF_VIEWS_SELECTOR = "#mini_profile_blink_wrapper_viewed_me > div"
+DEAFULT_PAGE_NUM_OF_ITEMS = 25

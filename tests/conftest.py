@@ -2,15 +2,14 @@ import logging
 from configparser import ConfigParser
 import pytest
 from playwright.sync_api import sync_playwright, BrowserContext, Page
-from typing import Generator
+from typing import Generator, cast, Any
+from logger import configure_application_logging
 from pages import ItemPage
 from pages import FeedPage
 from utils.msg_gen import MessageGenerator
 from dotenv import load_dotenv
-import os
 
 module_logger = logging.getLogger(__name__)
-from logger import configure_application_logging
 load_dotenv()
 
 
@@ -20,89 +19,8 @@ def config() -> ConfigParser:
     config.read('pytest.ini')
     return config
 
-@pytest.fixture(scope="session")
-def playwright_instance() -> Generator:
-    module_logger.info("Starting Playwright instance...")
-    instance = sync_playwright().start()
-    yield instance
-    module_logger.info("Stopping Playwright instance...")
-    instance.stop()
-    module_logger.info("Playwright instance stopped.")
-
-@pytest.fixture(scope="session")
-def playwright_browser(config: ConfigParser, playwright_instance) -> Generator[BrowserContext, None, None]:
-    try:
-        module_logger.info("Launching persistent Playwright browser context...")
-        HEADLESS = config.getboolean("Settings", "headless")
-        browser_context = playwright_instance.webkit.launch_persistent_context(
-            user_data_dir=config.get("Settings", "browser_data_dir"),
-            headless=HEADLESS
-        )
-        module_logger.info("Persistent browser context launched successfully.")
-        yield browser_context
-        module_logger.info("Closing persistent browser context...")
-        browser_context.close()
-        module_logger.info("Persistent browser context closed.")
-    except Exception as e:
-        module_logger.error(f"Failed to launch persistent browser context: {e}")
-        raise
-
-@pytest.fixture(scope="session")
-def playwright_browser_no_data(playwright_instance, config: ConfigParser) -> Generator[BrowserContext, None, None]:
-    try:
-        module_logger.info("Launching persistent Playwright browser context...")
-        HEADLESS = config.getboolean("Settings", "headless")
-        browser_context = playwright_instance.webkit.launch(headless=HEADLESS)
-        module_logger.info("Persistent browser context launched successfully.")
-        yield browser_context
-        module_logger.info("Closing persistent browser context...")
-        browser_context.close()
-        module_logger.info("Persistent browser context closed.")
-    except Exception as e:
-        module_logger.error(f"Failed to launch persistent browser context: {e}")
-        raise
-
-@pytest.fixture(scope="function")
-def playwright_page(playwright_browser: BrowserContext) -> Generator[Page, None, None]:
-    page = playwright_browser.pages[0] if playwright_browser.pages else playwright_browser.new_page()
-    module_logger.info("Navigating to test page...")
-    page.goto("about:blank")
-    module_logger.info("Test page loaded successfully.")
-    yield page
-    page.close()
-
-@pytest.fixture(scope="function")
-def playwright_page_no_data(playwright_browser_no_data: BrowserContext) -> Generator[Page, None, None]:
-    page = playwright_browser_no_data.new_page()
-    module_logger.info("Navigating to test page...")
-    page.goto("about:blank")
-    module_logger.info("Test page loaded successfully.")
-    yield page
-    page.close()
-    
-@pytest.fixture(scope="function")
-def feed_page(playwright_page):
-    return FeedPage(playwright_page)
-
-@pytest.fixture(scope="function")
-def item_page(playwright_page, config):
-    TEST_ID = config.get("Settings", "test_id")
-    return ItemPage(playwright_page, TEST_ID)
-
-@pytest.fixture
-def mock_llm_utils(mocker):
-    mock_llm = mocker.patch('utils.msg_gen.Copilot')
-    mock_llm_instance = mock_llm.return_value
-    mock_llm_instance.create_completion.return_value = ["Generated text"]
-    return mock_llm_instance
-
-
 @pytest.fixture(scope="session", autouse=True)
 def configure_logger(config: ConfigParser):
-    """Configure application logging once per test session using `logger.configure_application_logging`.
-
-    Reads settings from the `config` fixture and falls back to reasonable defaults.
-    """
     # Prefer pytest.ini [pytest] log_file if present
     try:
         pytest_log_file = config.get('pytest', 'log_file')
@@ -127,8 +45,111 @@ def configure_logger(config: ConfigParser):
         module_logger.error(f"Failed to configure application logging: {e}")
     return None
 
+@pytest.fixture(scope="session")
+def playwright_instance() -> Generator:
+    module_logger.info("Starting Playwright instance...")
+    instance = sync_playwright().start()
+    yield instance
+    module_logger.info("Stopping Playwright instance...")
+    instance.stop()
+    module_logger.info("Playwright instance stopped.")
 
-# Removed `logger` fixture: tests should call `logging.getLogger(__name__)` at module scope.
+@pytest.fixture(scope="session")
+def playwright_browser(config: ConfigParser, playwright_instance) -> Generator[BrowserContext, None, None]:
+    try:
+        module_logger.info("Launching persistent Playwright browser context...")
+        HEADLESS = config.getboolean("Settings", "headless")
+        browser_context = playwright_instance.chromium.launch_persistent_context(
+            user_data_dir=config.get("Settings", "browser_data_dir"),
+            headless=HEADLESS
+        )
+        # Verify the context is usable by creating a temporary page
+        temp_page = browser_context.new_page()
+        temp_page.goto("about:blank")
+        temp_page.close()
+        module_logger.info("Persistent browser context launched and verified successfully.")
+        yield browser_context
+        module_logger.info("Closing persistent browser context...")
+        browser_context.close()
+        module_logger.info("Persistent browser context closed.")
+    except Exception as e:
+        module_logger.error(f"Failed to launch persistent browser context: {e}")
+        raise
+
+@pytest.fixture(scope="session")
+def playwright_browser_no_data(playwright_instance, config: ConfigParser) -> Generator[BrowserContext, None, None]:
+    try:
+        module_logger.info("Launching non-persistent Playwright browser...")
+        HEADLESS = config.getboolean("Settings", "headless")
+        browser = playwright_instance.chromium.launch(headless=HEADLESS)
+        context = browser.new_context()
+        module_logger.info("Non-persistent browser context launched successfully.")
+        yield context
+        module_logger.info("Closing non-persistent browser context...")
+        context.close()
+        browser.close()
+        module_logger.info("Non-persistent browser closed.")
+    except Exception as e:
+        module_logger.error(f"Failed to launch non-persistent browser: {e}")
+        raise
+
+@pytest.fixture(scope="function")
+def playwright_page(playwright_browser: BrowserContext) -> Generator[Page, None, None]:
+    page: Page | None = None
+    try:
+        page = playwright_browser.new_page()
+        module_logger.info("New page created successfully.")
+        page.goto("about:blank")
+        module_logger.info("Test page loaded successfully.")
+        yield page
+        module_logger.info("Closing test page...")
+        page.close()
+        module_logger.info("Test page closed.")
+    except Exception as e:
+        module_logger.error(f"Failed to create or manage page: {e}")
+        if page is not None:
+            try:
+                page.close()
+            except:
+                pass
+        raise
+
+@pytest.fixture(scope="function")
+def playwright_page_no_data(playwright_browser_no_data: BrowserContext) -> Generator[Page, None, None]:
+    try:
+        page = playwright_browser_no_data.new_page()
+        module_logger.info("New page created successfully.")
+        page.goto("about:blank")
+        module_logger.info("Test page loaded successfully.")
+        yield page
+        module_logger.info("Closing test page...")
+        page.close()
+        module_logger.info("Test page closed.")
+    except Exception as e:
+        module_logger.error(f"Failed to create or manage page: {e}")
+        raise
+    
+@pytest.fixture(scope="function")
+def feed_page(playwright_page):
+    return FeedPage(playwright_page)
+
+@pytest.fixture(scope="function")
+def item_page(playwright_page, config):
+    TEST_ID = config.get("Settings", "test_id")
+    return ItemPage(playwright_page, TEST_ID)
+
+from langchain.chat_models.base import BaseChatModel
+
+@pytest.fixture
+def mock_msg_gen(mocker):
+    msggen = MessageGenerator(method="llm")
+    mock_llm = mocker.Mock(spec=BaseChatModel)
+    msggen.llm = mock_llm
+    mock_response = mocker.Mock()
+    mock_response.content = "Generated text"
+    mock_invoke = cast(Any, msggen.llm).invoke
+    mock_invoke.return_value = mock_response
+    return msggen
 
 @pytest.fixture
 def message_generator():

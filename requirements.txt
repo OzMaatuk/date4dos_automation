@@ -2,6 +2,14 @@
 
 # Core Libraries
 playwright
+langchain
+langchain-google-genai
+langchain-mistralai
+langchain-huggingface
+langchain-groq
+langchain-ollama
+langchain-deepseek
+langchain-nvidia-ai-endpoints
 
 # Configuration
 python-dotenv

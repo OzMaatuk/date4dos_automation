@@ -2,13 +2,15 @@ import logging
 import pytest
 from pages.feed_page import FeedPage
 from constants.feed_constants import FEED_ITEMS_SELECTOR 
+from playwright.sync_api import Page
 
 logger = logging.getLogger(__name__)
 
 
 def test_iterate_over_items_mocked(mocker):
     logger.debug("test_iterate_over_items_mocked start")
-    mock_page = mocker.Mock()
+    mock_page = mocker.Mock(spec=Page)
+    mock_page.url = "about:blank"
     mock_feed_page = FeedPage(mock_page)
     
     # Mock the locator and items
@@ -25,13 +27,13 @@ def test_iterate_over_items_mocked(mocker):
     
     # Assertions
     process_item.assert_called()
-    assert process_item.call_count == 4  # 0, 1, 2, 3 (limit inclusive)
+    assert process_item.call_count == 3
     mock_page.locator.assert_called_once_with(FEED_ITEMS_SELECTOR)
     mock_search_results.locator.return_value.all.assert_called_once()
 
 def test_iterate_over_items_e2e(feed_page: FeedPage):
     logger.debug("test_iterate_over_items_e2e start")
-    def process_item(item):
+    def process_item(feed_page, item):
         item.click()
         return
     feed_page.iterate_over_items(process_item=process_item, limit=3)

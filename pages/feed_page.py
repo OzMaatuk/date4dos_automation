@@ -1,7 +1,7 @@
 from types import FunctionType
-from typing import List
+from typing import List, Optional
 from playwright.sync_api import Page
-from constants.feed_constants import ADVANCED_SEARCH_SELECTOR, FEED_ITEMS_SELECTOR, SEARCH_URL_SUFFIX, VIEWS_URL_SUFFIX, NUM_OF_VIEWS_SELECTOR
+from constants.feed_constants import ADVANCED_SEARCH_SELECTOR, DEAFULT_PAGE_NUM_OF_ITEMS, FEED_ITEMS_SELECTOR, SEARCH_URL_SUFFIX, VIEWS_URL_SUFFIX, NUM_OF_VIEWS_SELECTOR
 from constants.settings import Settings
 import logging
 logger = logging.getLogger(__name__)
@@ -26,11 +26,11 @@ class FeedPage:
         self.page.locator(FEED_ITEMS_SELECTOR).evaluate("node => node.scrollTop = node.scrollHeight")
         self.page.wait_for_timeout(500)
 
-    def iterate_over_items(self, process_item: FunctionType, limit: int = 0) -> List:
+    def iterate_over_items(self, process_item: FunctionType, limit: Optional[int] = None) -> list:
         logger.debug("FeedPage.iterate_over_items")
         res = []
-
-        num_of_scroll_downs = limit
+        if not limit: limit = Settings().LIMIT
+        num_of_scroll_downs = limit // DEAFULT_PAGE_NUM_OF_ITEMS
         for i in range(num_of_scroll_downs):
             self.scroll_to_bottom()
 
@@ -41,6 +41,7 @@ class FeedPage:
 
         # Find all item elements within the search results
         items = search_results.locator('div.member_div').all()
+        if len(items) > limit: items = items[:limit]
         logger.info(f"Found {len(items)} items in search results.")
 
         # Iterate over each item

@@ -68,3 +68,19 @@ class Settings:
     @property
     def API_KEY(self):
         return os.getenv('GOOGLE_API_KEY') or self.config.get('Settings', 'api_key')
+    
+    @property
+    def DEFAULT_MODEL_NAME(self):
+        return os.getenv('DEFAULT_MODEL_NAME') or self.config.get('Settings', 'model_name')
+    
+    @property
+    def DEFAULT_MODEL_PROVIDER(self):
+        return os.getenv('DEFAULT_MODEL_PROVIDER') or self.config.get('Settings', 'model_provider')
+    
+    @property
+    def DEFAULT_MODEL_URL(self):
+        return os.getenv('DEFAULT_MODEL_URL') or self.config.get('Settings', 'model_url')
+
+    @property
+    def DEFAULT_MESSAGE(self):
+        return os.getenv('DEFAULT_MESSAGE') or self.config.get('Settings', 'default_message')

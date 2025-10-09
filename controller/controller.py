@@ -9,7 +9,7 @@ class Controller:
         logger.debug("Initiliazing Controller")
         self.page = page
         self.facade = Facade(page)
-        self.msggen = MessageGenerator(api_key)
+        self.msggen = MessageGenerator()
 
     def run(self, username: str, password: str, limit: int = 0):
         logger.debug("Controller.run")
