@@ -29,6 +29,7 @@ class Controller:
             for item_id in items:
                 try:
                     Facade.item_action(self.page, item_id, self.msggen.generate)
+                    self.facade.page.wait_for_timeout(2000)
                 except Exception as e:
                     logger.error(f"Error sending message to item {item_id}: {e}")
         except Exception as e:

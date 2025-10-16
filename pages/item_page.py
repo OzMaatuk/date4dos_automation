@@ -1,6 +1,6 @@
 from constants.settings import Settings
 from playwright.sync_api import Page, TimeoutError
-from constants.item_constants import ITEM_DETAILS, ITEM_URL_SUFFIX, MESSAGE_INPUT, SEND_MESSAGE_BUTTON
+from constants.item_constants import EMPTY_MESSEGAES_BOX, ITEM_DETAILS, ITEM_URL_SUFFIX, MESSAGE_INPUT, SEND_MESSAGE_BUTTON
 import logging
 logger = logging.getLogger(__name__)
 
@@ -35,3 +35,13 @@ class ItemPage:
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
             raise Exception("Message could not be sent.")
+        
+    def is_empty_messages(self) -> bool:
+        logger.debug("ItemPage.is_empty_messages")
+        try:
+            if self.page.locator(EMPTY_MESSEGAES_BOX).is_visible():
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Failed to determine old messages: {e}")
+            return True

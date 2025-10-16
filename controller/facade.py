@@ -31,22 +31,10 @@ class Facade:
     def apply_filters(self, filters: dict) -> None:
         logger.debug("Facade.apply_filters")
         return
-        # TODO
-        # implement more filter functions for each filter option in feed_page
-        feed_page = FeedPage(self.page)
-        try:
-            feed_page.filter_min_age(filters['min_age'])
-        except Exception as e:
-            logger.error(f"Error applying min_age filter: {e}")
-        try:
-            feed_page.filter_min_age(filters['max_age'])
-        except Exception as e:
-            logger.error(f"Error applying max_age filter: {e}")
-        try:
-            feed_page.filter_high(filters['high'])
-        except Exception as e:
-            logger.error(f"Error applying high filter: {e}")
-    
+        # TODO implement more filter functions for each filter option in feed_page
+        # feed_page = FeedPage(self.page)
+        # feed_page.filter_min_age(filters['min_age'])
+        
     @staticmethod
     def item_action(page: Page, id: str, create_message: Callable[[str], str]) -> None:
         logger.debug("Facade.operate_on_item")
@@ -54,7 +42,8 @@ class Facade:
             item_page = ItemPage(page, id)
             item_details = item_page.get_info()
             msg = create_message(item_details)
-            item_page.send_message(msg)
+            if item_page.is_empty_messages():
+                item_page.send_message(msg)
         except Exception as e:
             logger.error(f"Error performing action on item {id}: {e}")
 
